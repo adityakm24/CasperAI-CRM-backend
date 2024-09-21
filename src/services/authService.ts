@@ -255,6 +255,7 @@ export const resetPassword = async (token: string, newPassword: string) => {
         payload = await paseto.verify(token, publicKey);
     } catch (err) {
         logger.warn('Password reset failed: Invalid or expired token');
+        console.log(err);
         throw new CustomError('Invalid or expired password reset token.', 400);
     }
 
