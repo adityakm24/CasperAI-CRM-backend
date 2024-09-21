@@ -129,4 +129,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-
+#Paseto Tokens
+/src/Keys/private_key.pem
+/src/Keys/public_key.pem

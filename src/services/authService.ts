@@ -1,4 +1,4 @@
-import Agent from '../models/Users';
+import User from '../models/Users';
 import PersonalInfo from '../models/PersonalInfo';
 import Security from '../models/Security';
 import Subscription from '../models/Subcriptions'; 
@@ -60,19 +60,20 @@ export const registerAgent = async (agentData: any) => {
             stripeCustomerId: '',
         }], { session });
 
-        const newAgent = new Agent({
+        const newUser = new User({
             ...rest,
+            role: 'Agent',
             isActive: true,
         });
 
-        await newAgent.save({ session });
+        await newUser.save({ session });
 
         const personalInfoRecord = new PersonalInfo({
             ...personalInfo,
             email,
             password: hashedPassword,
             security: securityRecord._id,
-            agentId: newAgent._id,
+            userId: newUser._id,
             isEmailVerified: false,
             subscriptionId: defaultSubscription[0]._id,
         });
@@ -83,8 +84,8 @@ export const registerAgent = async (agentData: any) => {
 
         logger.info('User registered successfully, verification email sent', { email });
 
-        const accessToken = await createToken({ userId: newAgent._id, email });
-        const refreshToken = await createRefreshToken({ userId: newAgent._id, email });
+        const accessToken = await createToken({ userId: newUser._id, email });
+        const refreshToken = await createRefreshToken({ userId: newUser._id, email });
 
         securityRecord.refreshToken = refreshToken;
         securityRecord.refreshTokenExpires = addDays(new Date(), 7);
@@ -92,9 +93,23 @@ export const registerAgent = async (agentData: any) => {
 
         await session.commitTransaction();
 
+        const newUserResponse = {
+            role: newUser.role, 
+        };
+        
+
+        const personalInfoResponse = {
+            firstName: personalInfoRecord.firstName,
+            lastName: personalInfoRecord.lastName,
+            email: personalInfoRecord.email,
+            phoneNumber1: personalInfoRecord.phoneNumber1,
+            countryCode: personalInfoRecord.countryCode,
+            isEmailVerified: personalInfoRecord.isEmailVerified,
+        };
+
         return {
-            agent: newAgent,
-            personalInfo: personalInfoRecord,
+            agent: newUserResponse,
+            personalInfo: personalInfoResponse,
             accessToken,
             refreshToken,
             redirectToSubcription: true,
@@ -335,10 +350,11 @@ export const handleGoogleAuth = async (profile: Profile) => {
                 stripeCustomerId: '',
             }], { session });
 
-            const newAgent = new Agent({
+            const newUser = new User({
                 isActive: true,
+                role: 'Agent',
             });
-            await newAgent.save({ session });
+            await newUser.save({ session });
 
             user = new PersonalInfo({
                 firstName,
@@ -347,7 +363,7 @@ export const handleGoogleAuth = async (profile: Profile) => {
                 googleId: profile.id,
                 password,
                 isEmailVerified: true,
-                agentId: newAgent._id,
+                userId: newUser._id,
                 security: securityRecord._id,
                 phoneNumber1: '0000000000', 
                 countryCode: 'NA',  

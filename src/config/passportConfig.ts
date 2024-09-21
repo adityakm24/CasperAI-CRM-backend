@@ -25,7 +25,7 @@ passport.use(new GoogleStrategy({
             const userId = (user._id as Types.ObjectId).toString();
 
             const privateKey = readFileSync(config.pasetoKeys.privateKeyPath, 'utf8');
-            const token = await paseto.sign({ userId, email: user.email }, privateKey, { expiresIn: '4h' });
+            const token = await paseto.sign({ userId, email: user.email }, privateKey, { expiresIn: '5h' });
             const refresh = await paseto.sign({ userId, email: user.email }, privateKey, { expiresIn: '7d' });
 
             const securityRecord = await Security.findById(user.security);

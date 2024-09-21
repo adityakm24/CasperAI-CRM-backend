@@ -2,7 +2,6 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 
 export interface IUser extends Document {
-    personalInfoId: mongoose.Types.ObjectId; 
     role: string; 
     crm: string;
     crmIntegrationDetails: Record<string, any>; 
@@ -18,11 +17,6 @@ export interface IUser extends Document {
 
 const UserSchema: Schema<IUser> = new Schema(
     {
-        personalInfoId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'PersonalInfo',
-            required: true,
-        },
         role: {
             type: String,
             required: true,

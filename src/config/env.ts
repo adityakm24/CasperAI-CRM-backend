@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const config = {
-    port :  process.env.PORT || 3000,
+    port :  process.env.PORT,
     pasetoKeys : { 
         secretKey: process.env.SECRET_KEY ,
         publicKeyPath: process.env.PASETO_PUBLIC_KEY_PATH || '',
