@@ -28,8 +28,14 @@ export async function createToken(data: Record<string, any>): Promise<string> {
 export async function createRefreshToken(data: Record<string, any>): Promise<string> {
     try {
         data.secret_key = secretKey;
+
+        const payload = {
+            ...data,
+            type: 'refresh',
+        };
+
         const privateKey = readFileSync(config.pasetoKeys.privateKeyPath, 'utf8');
-        const refreshToken = await V4.sign(data, privateKey, { expiresIn: '7d' });
+        const refreshToken = await V4.sign(payload, privateKey, { expiresIn: '7d' });
 
         logger.info('PASETO refresh token created successfully', { refreshToken });
         return refreshToken;
