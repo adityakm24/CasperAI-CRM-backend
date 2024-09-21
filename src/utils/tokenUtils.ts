@@ -15,7 +15,7 @@ export async function createToken(data: Record<string, any>): Promise<string> {
 
         data.secret_key = secretKey;
         const privateKey = readFileSync(config.pasetoKeys.privateKeyPath, 'utf8');
-        const token = await V4.sign(data, privateKey, { expiresIn: '240m' });
+        const token = await V4.sign(data, privateKey, { expiresIn: '500m' });
 
         logger.info('PASETO token created successfully', { token });
         return token;

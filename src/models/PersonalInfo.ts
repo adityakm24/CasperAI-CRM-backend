@@ -8,7 +8,7 @@ export interface IPersonalInfo extends Document {
     phoneNumber1: string;
     countryCode: string;
     gender: string;
-    agentId: Types.ObjectId;
+    userId: Types.ObjectId;
     googleId: string;
     password: string;
     zipcode: number;
@@ -25,7 +25,7 @@ const personalInfoSchema = new Schema<IPersonalInfo>({
     phoneNumber1: { type: String, required: true },
     countryCode: { type: String, required: true },
     gender: { type: String },
-    agentId: { type: Schema.Types.ObjectId, ref: 'Agent', required: true, index: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     googleId: { type: String, unique: true, sparse: true },
     password: { type: String, required: true },
     zipcode: { type: Number },

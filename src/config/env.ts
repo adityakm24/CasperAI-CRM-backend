@@ -6,8 +6,8 @@ export const config = {
     port :  process.env.PORT || 3000,
     pasetoKeys : { 
         secretKey: process.env.SECRET_KEY ,
-        publicKeyPath: process.env.PASETO_PUBLIC_KEY_PATH || './src/Keys/public_key.pem',
-        privateKeyPath: process.env.PASETO_PRIVATE_KEY_PATH || './src/Keys/private_key.pem',
+        publicKeyPath: process.env.PASETO_PUBLIC_KEY_PATH || '',
+        privateKeyPath: process.env.PASETO_PRIVATE_KEY_PATH || '',
     },
     mongoUri: process.env.MONGODB_URI || '',
     frontendUrl: process.env.FRONTEND_URL,
