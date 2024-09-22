@@ -2,9 +2,9 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 
 export interface IUser extends Document {
-    role: string; 
+    role: string;
     crm: string;
-    crmIntegrationDetails: Record<string, any>; 
+    crmIntegrationDetails: Record<string, any>;
     isCaller: boolean;
     isActive: boolean;
     isWhatsAppVerified: boolean;
@@ -12,8 +12,8 @@ export interface IUser extends Document {
     whatsappToken: string;
     createdAt: Date;
     updatedAt: Date;
+    kanbanBoard: mongoose.Types.ObjectId[]; 
 }
-
 
 const UserSchema: Schema<IUser> = new Schema(
     {
@@ -25,7 +25,7 @@ const UserSchema: Schema<IUser> = new Schema(
             type: String,
         },
         crmIntegrationDetails: {
-            type: Schema.Types.Mixed, 
+            type: Schema.Types.Mixed,
         },
         isCaller: {
             type: Boolean,
@@ -45,6 +45,12 @@ const UserSchema: Schema<IUser> = new Schema(
         whatsappToken: {
             type: String,
         },
+        kanbanBoard: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Column', 
+            },
+        ],
         createdAt: {
             type: Date,
             default: Date.now,
@@ -56,7 +62,6 @@ const UserSchema: Schema<IUser> = new Schema(
     },
     { timestamps: true }
 );
-
 
 const User = mongoose.model<IUser>('User', UserSchema);
 export default User;
