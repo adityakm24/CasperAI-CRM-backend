@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const config = {
-    port :  process.env.PORT,
+    port :  Number(process.env.PORT),
     pasetoKeys : { 
         secretKey: process.env.SECRET_KEY ,
         publicKeyPath: process.env.PASETO_PUBLIC_KEY_PATH || '',
@@ -19,4 +19,5 @@ export const config = {
     mailPort: Number(process.env.MAIL_PORT),
     mailUser: process.env.MAIL_USER,
     mailPass: process.env.MAIL_PASS,
+    nodeEnv: process.env.NODE_ENV,
 }

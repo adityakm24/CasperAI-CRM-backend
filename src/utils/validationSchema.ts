@@ -1,3 +1,4 @@
+import { config } from '../config/env';
 import Joi from 'joi';
 
 
@@ -11,18 +12,19 @@ export const userSignupSchema = Joi.object({
     gender: Joi.string().valid('male', 'female', 'other').optional(), 
     password: Joi.string().min(8).required(),
     zipcode: Joi.number().optional(),
-    recaptchaToken: process.env.NODE_ENV === 'development' ? Joi.string().optional() : Joi.string().required(),
+    recaptchaToken: config.nodeEnv === 'development' ? Joi.string().optional() : Joi.string().required(),
 });
 
 
 export const userLoginSchema = Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().min(8).required(),
-    recaptchaToken: process.env.NODE_ENV === 'development' ? Joi.string().optional() : Joi.string().required(),
+    recaptchaToken: config.nodeEnv === 'development' ? Joi.string().optional() : Joi.string().required(),
 });
 
 export const emailVerificationSchema = Joi.object({
-    token: Joi.string().required(), 
+    email: Joi.string().required(),
+    otp: Joi.string().required()
 });
 
 export const agentValidationSchema = Joi.object({

@@ -7,8 +7,6 @@ export interface ISecurity extends Document {
     passwordResetExpires?: Date;
     otp?: string;
     otpValidity?: Date;
-    emailVerificationToken?: string;
-    emailVerificationExpires?: Date;
 }
 
 const securitySchema = new Schema<ISecurity>({
@@ -18,8 +16,6 @@ const securitySchema = new Schema<ISecurity>({
     passwordResetExpires: { type: Date, default: undefined },
     otp: { type: String, default: undefined },
     otpValidity: { type: Date, default: undefined },
-    emailVerificationToken: { type: String, default: undefined },
-    emailVerificationExpires: { type: Date, default: undefined },
 });
 
 export default model<ISecurity>('Security', securitySchema);

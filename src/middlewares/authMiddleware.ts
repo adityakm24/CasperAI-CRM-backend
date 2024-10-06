@@ -36,7 +36,7 @@ export const authorize = async (req: Request, res: Response, next: NextFunction)
 
 export const authorizeRefreshToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { refreshToken } = req.body;
+        const  refreshToken  = req.cookies.refreshToken;
 
         if (!refreshToken) {
             logger.warn('Authorization failed: No refresh token provided');

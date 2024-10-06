@@ -1,3 +1,4 @@
+import { Response } from 'express';
 import User from '../models/Users';
 import PersonalInfo from '../models/PersonalInfo';
 import Security from '../models/Security';
@@ -5,26 +6,26 @@ import Subscription from '../models/Subcriptions';
 import { CustomError } from '../middlewares/errorHandler';
 import { createToken, createRefreshToken, validateRefreshToken } from '../utils/tokenUtils';
 import bcrypt from 'bcryptjs';
-import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email';
+import { sendOtpEmail, sendPasswordResetEmail } from '../utils/email';
 import { readFileSync } from 'fs';
 import { V4 as paseto } from 'paseto';
 import { config } from '../config/env';
 import { addMinutes, addDays } from 'date-fns';
 import logger from '../config/logger';
 import { startSession } from 'mongoose';
-import { randomBytes, scryptSync } from 'crypto';
+import { randomBytes, randomInt, scryptSync } from 'crypto';
 import { Profile } from 'passport-google-oauth20';
 
 // Functions related to authentication like register, login, email verification, password reset (Only the AuthService class is Added here) Dont add anything else here 
 // For updating user details, Profile Updates etc. Use userService.ts
 
 
-export const registerAgent = async (agentData: any) => {
+export const registerAgent = async (agentData: any, res: Response) => {
     const session = await startSession();
     session.startTransaction();
 
     try {
-        const { email, password, personalInfo,  ...rest } = agentData;
+        const { email, password, personalInfo, ...rest } = agentData;
 
         logger.info('Attempting to register user', { email });
 
@@ -36,14 +37,13 @@ export const registerAgent = async (agentData: any) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const privateKey = readFileSync(config.pasetoKeys.privateKeyPath, 'utf8');
-        const verificationToken = await paseto.sign({ email }, privateKey, { expiresIn: '1h' });
 
-        const emailVerificationExpires = addMinutes(new Date(), 60);
-
+        const otp = String(randomInt(100000, 999999));
+        const otpValidity = addMinutes(new Date(), 20);
+        
         const securityRecord = new Security({
-            emailVerificationToken: verificationToken,
-            emailVerificationExpires,
+            otp,
+            otpValidity,
         });
         await securityRecord.save({ session });
 
@@ -80,12 +80,20 @@ export const registerAgent = async (agentData: any) => {
         console.log('Personal Info Data:', personalInfo);
         await personalInfoRecord.save({ session });
 
-        await sendVerificationEmail(email, verificationToken);
+        // Send OTP to the user's email
+        await sendOtpEmail(email, otp);
 
-        logger.info('User registered successfully, verification email sent', { email });
+        logger.info('User registered successfully, OTP sent', { email });
 
         const accessToken = await createToken({ userId: newUser._id, email });
         const refreshToken = await createRefreshToken({ userId: newUser._id, email });
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: config.nodeEnv === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
 
         securityRecord.refreshToken = refreshToken;
         securityRecord.refreshTokenExpires = addDays(new Date(), 7);
@@ -94,9 +102,8 @@ export const registerAgent = async (agentData: any) => {
         await session.commitTransaction();
 
         const newUserResponse = {
-            role: newUser.role, 
+            role: newUser.role,
         };
-        
 
         const personalInfoResponse = {
             firstName: personalInfoRecord.firstName,
@@ -111,7 +118,6 @@ export const registerAgent = async (agentData: any) => {
             agent: newUserResponse,
             personalInfo: personalInfoResponse,
             accessToken,
-            refreshToken,
             redirectToSubcription: true,
         };
     } catch (error) {
@@ -121,10 +127,10 @@ export const registerAgent = async (agentData: any) => {
     } finally {
         session.endSession();
     }
-}
+};
 
 
-export const loginUser = async (email: string, password: string) => {
+export const loginUser = async (email: string, password: string, res: Response) => {
     logger.info('Attempting to log in user', { email });
 
     const user = await PersonalInfo.findOne({ email }).populate('security');
@@ -150,6 +156,13 @@ export const loginUser = async (email: string, password: string) => {
     const accessToken = await createToken({ userId: user._id, email: user.email });
     const refreshToken = await createRefreshToken({ userId: user._id, email: user.email });
 
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: config.nodeEnv === 'production', 
+        sameSite: 'strict', 
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
 
     const security = await Security.findById(user.security);
 
@@ -165,57 +178,59 @@ export const loginUser = async (email: string, password: string) => {
     return {
         user,
         accessToken,
-        refreshToken,
     };
 };
 
-export const verifyEmail = async (token: string) => {
+export const verifyOtp = async (email: string, otp: string) => {
     try {
-        logger.info('Attempting to verify email', { token });
-
-        const publicKey = readFileSync(config.pasetoKeys.publicKeyPath, 'utf8');
-        const payload = await paseto.verify(token, publicKey);
-        const { email } = payload;
+        logger.info('Attempting to verify OTP', { email, otp });
 
         const user = await PersonalInfo.findOne({ email }).populate('security');
         if (!user) {
-            logger.warn('Email verification failed: User not found', { email });
-            throw new CustomError('User not found.', 404);
+            logger.warn('OTP verification failed: User not found', { email });
+            throw new CustomError('User not found', 404);
         }
-        if (user.isEmailVerified) {
-            logger.warn('Email verification failed: Email already verified', { email });
-            throw new CustomError('Email is already verified.', 400);
-        }
+
         const security = await Security.findById(user.security);
         if (!security) {
-            logger.warn('Email verification failed: Security details not found', { email });
-            throw new CustomError('Security details not found.', 404);
+            logger.warn('OTP verification failed: Security details not found', { email });
+            throw new CustomError('Security details not found', 404);
         }
 
-        if (
-            !security.emailVerificationToken ||
-            security.emailVerificationToken !== token ||
-            !security.emailVerificationExpires ||
-            new Date() > security.emailVerificationExpires
-        ) {
-            logger.warn('Email verification failed: Invalid or expired token', { email });
-            throw new CustomError('Invalid or expired token.', 400);
+        if (!security.otp || security.otp !== otp) {
+            logger.warn('OTP verification failed: Invalid OTP', { email });
+            throw new CustomError('Invalid OTP', 400);
         }
+
+        if (!security.otpValidity || new Date() > security.otpValidity) {
+            logger.warn('OTP verification failed: OTP expired', { email });
+            throw new CustomError('OTP expired', 400);
+        }
+
         user.isEmailVerified = true;
-        security.emailVerificationToken = '';
-        security.emailVerificationExpires = undefined;
+        security.otp = undefined;
+        security.otpValidity = undefined;
 
-        await security.save();
         await user.save();
+        await security.save();
 
-        logger.info('Email verified successfully', { email });
+        logger.info('OTP verified successfully', { userId: user._id });
 
-        return { message: 'Email verified successfully.', userId: user._id };
-    } catch (error: any) {
-        logger.error('Error during email verification', { error: error.message });
-        throw new CustomError(error.message || 'Verification failed.', error.statusCode || 400);
+        return { message: 'OTP verified successfully', userId: user._id };
+    } catch (error: unknown) {
+        if (error instanceof CustomError) {
+            logger.error('Custom error during OTP verification', { error: error.message });
+            throw error;
+        } else if (error instanceof Error) {
+            logger.error('Unexpected error during OTP verification', { error: error.message });
+            throw new CustomError('An unexpected error occurred during OTP verification', 500);
+        } else {
+            logger.error('Unknown error type during OTP verification');
+            throw new CustomError('An unknown error occurred', 500);
+        }
     }
 };
+
 
 export const requestPasswordReset = async (email: string) => {
     const user = await PersonalInfo.findOne({ email }).populate('security');

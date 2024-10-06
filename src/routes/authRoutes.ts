@@ -1,29 +1,43 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import * as authController from '../controllers/authController';
 import { validationMiddleware } from '../middlewares/validationMiddleware';
 import { authorize, authorizeRefreshToken } from '../middlewares/authMiddleware';
-import { userSignupSchema, userLoginSchema } from '../utils/validationSchema';
-import passport from 'passport';
+import { userSignupSchema, userLoginSchema, emailVerificationSchema } from '../utils/validationSchema';
 
-
+// Utility function to catch errors in async routes
+const asyncHandler = (fn: Function) => (req: Request, res: Response, next: NextFunction) =>
+    Promise.resolve(fn(req, res, next)).catch(next);
 
 const router = Router();
 
-router.post('/register', validationMiddleware(userSignupSchema), authController.register);
+// Register route
+router.post('/register', validationMiddleware(userSignupSchema), asyncHandler(authController.register));
 
-router.post('/login', validationMiddleware(userLoginSchema), authController.login);
+// Login route
+router.post('/login', validationMiddleware(userLoginSchema), asyncHandler(authController.login));
 
-router.get('/verify-email', authController.verifyEmail);
+// Email verification route
+router.post('/verify-email', validationMiddleware(emailVerificationSchema),asyncHandler(authController.verifyOtp));
 
-router.post('/request-password-reset', authController.requestPasswordReset);
+// Request password reset route
+router.post('/request-password-reset', asyncHandler(authController.requestPasswordReset));
 
-router.post('/reset-password', authController.resetPassword);
+// Reset password route
+router.post('/reset-password', asyncHandler(authController.resetPassword));
 
-router.post('/refresh-token', authorizeRefreshToken, authController.refreshAccessToken);
+// Refresh token route
+router.post('/refresh-token', authorizeRefreshToken, asyncHandler(authController.refreshAccessToken));
 
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+// Google authentication route
+// Initiate Google OAuth route (redirects to Google)
+router.get('/google', authController.initiateGoogleAuth);
 
-router.get('/google/callback', authController.googleCallback);
+// Google OAuth callback route
+router.get('/google/callback', asyncHandler(authController.googleCallback));
+
+
+//For Google Auth token verify
+router.get('/verify-token', asyncHandler(authController.verifyToken));
 
 
 export default router;

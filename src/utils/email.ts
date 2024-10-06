@@ -10,18 +10,18 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-export const sendVerificationEmail = async (email: string, token: string) => {
-    const verificationLink = `${config.frontendUrl}/verify-email?token=${token}`;
+export const sendOtpEmail = async (email: string, otp: string) => {
     const mailOptions = {
         from: '"Casper AI" <no-reply@casperai.co>',
         to: email,
-        subject: 'Email Verification',
-        text: `Please verify your email by clicking the link: ${verificationLink}`,
-        html: `<p>Please verify your email by clicking the link below:</p><a href="${verificationLink}">${verificationLink}</a>`,
+        subject: 'Your Email Verification OTP',
+        text: `Your OTP for email verification is: ${otp}. It is valid for 20 minutes.`,
+        html: `<p>Your OTP for email verification is: <strong>${otp}</strong>. It is valid for 10 minutes.</p>`,
     };
 
     await transporter.sendMail(mailOptions);
 };
+
 
 
 export const sendPasswordResetEmail = async (email: string, token: string) => {
