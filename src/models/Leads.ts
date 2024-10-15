@@ -10,6 +10,7 @@ export interface ILead extends Document {
     notes: string;
     userId: mongoose.Types.ObjectId; // Foreign key to users collection
     propertyInterest: string;
+    tag?: string;  // Add tag field for categorizing the lead
     createdAt: Date;
     updatedAt: Date;
 }
@@ -50,6 +51,10 @@ const LeadSchema: Schema = new Schema(
         propertyInterest: {
             type: String,
             required: false,
+        },
+        tag: {
+            type: String, // Tag to categorize the lead (e.g., 'serious', 'notserious')
+            required: false,  // Make it optional initially
         },
     },
     {

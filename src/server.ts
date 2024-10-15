@@ -12,10 +12,12 @@ import cookieParser from 'cookie-parser';
 import { config } from './config/env';
 import logger from './config/logger';
 import authRoutes from './routes/authRoutes';
-import webhookRoutes from './routes/WebhookRoutes';
 import { rateLimiter } from './middlewares/rateLimiter';
 import requestLogger from './middlewares/requestLogger';
 import { errorHandler } from './middlewares/errorHandler';
+import webhookRoutes from './routes/WebhookRoutes';
+import whatsappWebhookRoutes from './routes/WebhookRoutes';  // Import WhatsApp webhook routes
+
 import { generateKeys } from './Keys/generateKeys';
 
 dotenv.config();
@@ -28,12 +30,7 @@ const setupMiddlewares = (app: express.Application) => {
 
     app.use(
         cors({
-            origin: [
-                'https://backend.casperai.co',
-                'https://casper-ai-72di.vercel.app',
-                'http://localhost:3000',
-                'http://localhost:5173',
-            ],
+            origin: ['https://backend.casperai.co', 'https://casper-ai-72di.vercel.app', 'http://localhost:3000'],
             credentials: true,
             methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
             optionsSuccessStatus: 204,
@@ -112,12 +109,15 @@ const initializeServer = async () => {
     const server = http.createServer(app);
 
     setupMiddlewares(app);
+
     setupSocketIO(server);
 
     app.use('/auth', authRoutes);
-    app.use('/webhook', webhookRoutes);  // Add Webhook routes
+    app.use('/webhook', webhookRoutes); 
+    app.use('/whatsapp', whatsappWebhookRoutes);  // Register WhatsApp webhook route
 
     app.get('/health', (req, res) => res.status(200).json({ status: 'OK' }));
+
     app.use(errorHandler);
 
     try {
