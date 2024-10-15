@@ -31,7 +31,7 @@ const LeadSchema: Schema = new Schema(
         },
         crmIdentifier: {
             type: String,
-            required: true,
+            required: false,
         },
         status: {
             type: String,
