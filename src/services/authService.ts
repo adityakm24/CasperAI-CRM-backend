@@ -16,6 +16,7 @@ import { startSession } from 'mongoose';
 import { randomBytes, randomInt, scryptSync } from 'crypto';
 import { Profile } from 'passport-google-oauth20';
 
+
 // Functions related to authentication like register, login, email verification, password reset (Only the AuthService class is Added here) Dont add anything else here 
 // For updating user details, Profile Updates etc. Use userService.ts
 

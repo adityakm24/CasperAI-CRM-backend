@@ -12,41 +12,46 @@ import cookieParser from 'cookie-parser';
 import { config } from './config/env';
 import logger from './config/logger';
 import authRoutes from './routes/authRoutes';
+import webhookRoutes from './routes/WebhookRoutes';
 import { rateLimiter } from './middlewares/rateLimiter';
-import  requestLogger  from './middlewares/requestLogger';
+import requestLogger from './middlewares/requestLogger';
 import { errorHandler } from './middlewares/errorHandler';
-
 import { generateKeys } from './Keys/generateKeys';
-
 
 dotenv.config();
 
 const setupMiddlewares = (app: express.Application) => {
-    app.use(helmet());  
-    app.use(compression());  
-    app.use(express.json());  
-    app.use(express.urlencoded({ extended: true }));  
+    app.use(helmet());
+    app.use(compression());
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
 
-    app.use(cors({
-        origin: ['https://backend.casperai.co', 'https://casper-ai-72di.vercel.app', 'http://localhost:3000', 'http://localhost:5173'],
-        credentials: true,
-        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-        optionsSuccessStatus: 204
-    }));
+    app.use(
+        cors({
+            origin: [
+                'https://backend.casperai.co',
+                'https://casper-ai-72di.vercel.app',
+                'http://localhost:3000',
+                'http://localhost:5173',
+            ],
+            credentials: true,
+            methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+            optionsSuccessStatus: 204,
+        })
+    );
 
-    app.use(cookieParser());  
-    app.use(rateLimiter);  
-    app.use(requestLogger);  
+    app.use(cookieParser());
+    app.use(rateLimiter);
+    app.use(requestLogger);
 };
-
 
 const setupSocketIO = (server: http.Server) => {
     const io = new SocketIOServer(server, {
         cors: {
             origin: ['https://backend.casperai.co', 'https://casper-ai-72di.vercel.app', 'http://localhost:3000'],
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD'],
-            credentials: true
-        }
+            credentials: true,
+        },
     });
 
     io.on('connection', (socket) => {
@@ -75,7 +80,6 @@ const setupGracefulShutdown = () => {
     process.on('SIGINT', shutdown);
     process.on('SIGTERM', shutdown);
 };
-
 
 const startServer = (app: express.Application, server: http.Server, port: number) => {
     const portNumber = Number(port);
@@ -108,15 +112,14 @@ const initializeServer = async () => {
     const server = http.createServer(app);
 
     setupMiddlewares(app);
-
     setupSocketIO(server);
 
     app.use('/auth', authRoutes);
+    app.use('/webhook', webhookRoutes);  // Add Webhook routes
 
     app.get('/health', (req, res) => res.status(200).json({ status: 'OK' }));
-
     app.use(errorHandler);
-    
+
     try {
         await mongoose.connect(config.mongoUri);
         logger.info('Connected to MongoDB');
@@ -127,6 +130,5 @@ const initializeServer = async () => {
 
     setupGracefulShutdown();
 };
-
 
 initializeServer();
