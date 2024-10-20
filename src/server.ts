@@ -30,7 +30,7 @@ const setupMiddlewares = (app: express.Application) => {
 
     app.use(
         cors({
-            origin: ['https://backend.casperai.co', 'https://casper-ai-72di.vercel.app', 'http://localhost:3000'],
+            origin: ['https://backend.casperai.co', 'https://casper-ai-72di.vercel.app', 'http://localhost:3000','http://localhost:5173'],
             credentials: true,
             methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
             optionsSuccessStatus: 204,
@@ -114,7 +114,7 @@ const initializeServer = async () => {
 
     app.use('/auth', authRoutes);
     app.use('/webhook', webhookRoutes); 
-    app.use('/whatsapp', whatsappWebhookRoutes);  // Register WhatsApp webhook route
+    app.use('/whatsapp', whatsappWebhookRoutes);  
 
     app.get('/health', (req, res) => res.status(200).json({ status: 'OK' }));
 
