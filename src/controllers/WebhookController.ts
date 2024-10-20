@@ -1,34 +1,35 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { generateWebhookService, processWebhookLeadService } from '../services/webhookService';
 import logger from '../config/logger';
-import { httpHandler } from '../utils/httpHandler';
+import { sendCreatedResponse, sendSuccessResponse, sendInternalServerErrorResponse } from '../utils/responseHandler'; 
 
-// Controller to generate a webhook for a specific user
-export const generateWebhook = httpHandler(async (req: Request, res: Response) => {
-    const { userId } = req.body;
-    const webhook = await generateWebhookService(userId);
 
-    logger.info(`Webhook created successfully for user: ${userId}`);
+export const generateWebhook = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { userId } = req.body;
+        const webhook = await generateWebhookService(userId);
 
-    res.status(201).json({
-        success: true,
-        message: 'Webhook created successfully',
-        webhook,
-    });
-});
+        logger.info(`Webhook created successfully for user: ${userId}`);
 
-// Controller to process incoming leads from the CRM webhook
-export const processWebhookLead = httpHandler(async (req: Request, res: Response) => {
-    const { phoneNumber, firstName, lastName, crmIdentifier } = req.body;
-    const verifyToken = req.headers['x-verify-token'] as string;
+        return sendCreatedResponse(res, { webhook }, 'Webhook created successfully');
+    } catch (error) {
+        logger.error('Error creating webhook', { error });
+        return sendInternalServerErrorResponse(res, 'Error creating webhook');
+    }
+};
 
-    const updatedLead = await processWebhookLeadService(phoneNumber, firstName, lastName, crmIdentifier, verifyToken);
+export const processWebhookLead = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { phoneNumber, firstName, lastName, crmIdentifier } = req.body;
+        const verifyToken = req.headers['x-verify-token'] as string;
 
-    logger.info(`Lead ${updatedLead ? 'updated' : 'created'} successfully`);
+        const updatedLead = await processWebhookLeadService(phoneNumber, firstName, lastName, crmIdentifier, verifyToken);
 
-    res.status(201).json({
-        success: true,
-        message: `Lead ${updatedLead ? 'updated' : 'created'} successfully`,
-        lead: updatedLead,
-    });
-});
+        logger.info(`Lead ${updatedLead ? 'updated' : 'created'} successfully`);
+
+        return sendCreatedResponse(res, { lead: updatedLead }, `Lead ${updatedLead ? 'updated' : 'created'} successfully`);
+    } catch (error) {
+        logger.error('Error processing webhook lead', { error });
+        return sendInternalServerErrorResponse(res, 'Error processing webhook lead');
+    }
+};

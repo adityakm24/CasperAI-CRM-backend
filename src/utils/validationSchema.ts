@@ -27,6 +27,10 @@ export const emailVerificationSchema = Joi.object({
     otp: Joi.string().required()
 });
 
+export const resendOtpSchema = Joi.object({
+    email: Joi.string().email().required(),
+});
+
 export const agentValidationSchema = Joi.object({
     role: Joi.string().required(),
     agentName: Joi.string().required(),

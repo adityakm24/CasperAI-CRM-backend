@@ -1,19 +1,20 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { processWhatsAppResultService } from '../services/whatsappService';
 import logger from '../config/logger';
-import { httpHandler } from '../utils/httpHandler';
+import { sendSuccessResponse, sendInternalServerErrorResponse } from '../utils/responseHandler'; 
 
-// Controller to process WhatsApp bot result
-export const processWhatsAppResult = httpHandler(async (req: Request, res: Response) => {
-    const { phoneNumber, userResponse } = req.body;
 
-    const updatedLead = await processWhatsAppResultService(phoneNumber, userResponse);
+export const processWhatsAppResult = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { phoneNumber, userResponse } = req.body;
 
-    logger.info(`Lead updated successfully for phone number: ${phoneNumber} with status: ${updatedLead.status}`);
+        const updatedLead = await processWhatsAppResultService(phoneNumber, userResponse);
 
-    res.status(200).json({
-        success: true,
-        message: `Lead updated successfully with status: ${updatedLead.status}`,
-        lead: updatedLead,
-    });
-});
+        logger.info(`Lead updated successfully for phone number: ${phoneNumber} with status: ${updatedLead.status}`);
+
+        return sendSuccessResponse(res, { lead: updatedLead }, `Lead updated successfully with status: ${updatedLead.status}`);
+    } catch (error) {
+        logger.error('Error processing WhatsApp result', { error });
+        return sendInternalServerErrorResponse(res, 'Error processing WhatsApp result');
+    }
+};

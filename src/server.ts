@@ -16,8 +16,7 @@ import { rateLimiter } from './middlewares/rateLimiter';
 import requestLogger from './middlewares/requestLogger';
 import { errorHandler } from './middlewares/errorHandler';
 import webhookRoutes from './routes/WebhookRoutes';
-import whatsappWebhookRoutes from './routes/WebhookRoutes';  // Import WhatsApp webhook routes
-
+import whatsappWebhookRoutes from './routes/WebhookRoutes';
 import { generateKeys } from './Keys/generateKeys';
 
 dotenv.config();

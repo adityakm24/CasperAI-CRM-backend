@@ -232,6 +232,44 @@ export const verifyOtp = async (email: string, otp: string) => {
     }
 };
 
+export const resendOtp = async (email: string, res: Response) => {
+    const session = await startSession();
+    session.startTransaction();
+    
+    try {
+        const personalInfo = await PersonalInfo.findOne({ email }).session(session);
+        if (!personalInfo) {
+            throw new CustomError('User not found', 404);
+        }
+
+        const securityRecord = await Security.findById(personalInfo.security).session(session);
+        if (!securityRecord) {
+            throw new CustomError('Security record not found', 404);
+        }
+
+        const otp = String(randomInt(100000, 999999));
+        const otpValidity = addMinutes(new Date(), 20);
+
+        securityRecord.otp = otp;
+        securityRecord.otpValidity = otpValidity;
+        await securityRecord.save({ session });
+
+        await sendOtpEmail(email, otp);
+
+        logger.info('OTP resent successfully', { email });
+
+        await session.commitTransaction();
+
+        return { message: 'OTP resent successfully' };
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Error while resending OTP', { error });
+        throw error;
+    } finally {
+        session.endSession();
+    }
+};
+
 
 export const requestPasswordReset = async (email: string) => {
     const user = await PersonalInfo.findOne({ email }).populate('security');

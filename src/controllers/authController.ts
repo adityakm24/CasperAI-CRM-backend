@@ -106,6 +106,25 @@ export const verifyOtp = async (req: Request, res: Response, next: NextFunction)
     }
 };
 
+export const resendOtp = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            throw new CustomError('Email is required to resend OTP', 400);
+        }
+
+        const result = await authService.resendOtp(email, res);
+        return sendSuccessResponse(res, result, 'OTP resent successfully.');
+    } catch (error) {
+        logger.error('Error while resending OTP', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+        });
+        next(error);
+    }
+};
+
 export const requestPasswordReset = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { email } = req.body;
