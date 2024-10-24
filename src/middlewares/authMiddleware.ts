@@ -34,6 +34,7 @@ export const authorize = async (req: Request, res: Response, next: NextFunction)
     }
 };
 
+
 export const authorizeRefreshToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const  refreshToken  = req.cookies.refreshToken;

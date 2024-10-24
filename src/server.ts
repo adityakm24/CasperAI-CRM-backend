@@ -18,6 +18,8 @@ import { errorHandler } from './middlewares/errorHandler';
 import webhookRoutes from './routes/WebhookRoutes';
 import whatsappWebhookRoutes from './routes/WebhookRoutes';
 import { generateKeys } from './Keys/generateKeys';
+import leadRoutes from './routes/leadRoutes';  // Add this line
+
 
 dotenv.config();
 
@@ -114,7 +116,7 @@ const initializeServer = async () => {
     app.use('/auth', authRoutes);
     app.use('/webhook', webhookRoutes); 
     app.use('/whatsapp', whatsappWebhookRoutes);  
-
+    app.use('/leads', leadRoutes);  // Use the new lead routes
     app.get('/health', (req, res) => res.status(200).json({ status: 'OK' }));
 
     app.use(errorHandler);

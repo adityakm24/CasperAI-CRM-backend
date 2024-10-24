@@ -45,3 +45,13 @@ export const knowledgeBaseSchema = Joi.object({
     agentId: Joi.string().required(),
 });
 
+export const leadSchema = Joi.object({
+    firstName: Joi.string().min(3).max(30).required(),
+    lastName: Joi.string().min(3).max(30).required(),
+    phoneNumber: Joi.string().min(10).max(15).required(),
+    crmIdentifier: Joi.string().optional(),
+    status: Joi.string().valid('fresh', 'qualified', 'unqualified').optional(),
+    notes: Joi.string().optional(),
+    propertyInterest: Joi.string().optional(),
+    tag: Joi.string().optional(),
+});
