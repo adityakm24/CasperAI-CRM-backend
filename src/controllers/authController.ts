@@ -259,3 +259,24 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
         return sendUnauthorizedResponse(res, 'Invalid or expired token');
     }
 };
+
+
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { userId } = req.body;
+
+        if (!userId) {
+            logger.warn('Logout failed: Missing user ID');
+            return sendUnauthorizedResponse(res, 'User ID is required for logout');
+        }
+        const result = await authService.logoutUser(userId, res);
+        return sendSuccessResponse(res, result, 'User logged out successfully.');
+    } catch (error) {
+        logger.error('Error during logout', { error: error instanceof Error ? error.message : String(error) });
+        if (error instanceof CustomError) {
+            return next(error);
+        } else {
+            return sendInternalServerErrorResponse(res, 'An unexpected error occurred.');
+        }
+    }
+};

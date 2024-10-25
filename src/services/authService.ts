@@ -457,3 +457,32 @@ export const handleGoogleSignIn = async (profile: Profile) => {
     }
 };
 
+
+export const logoutUser = async (userId: string, res: Response) => {
+    try {
+        logger.info('Attempting to log out user', { userId });
+
+        const securityRecord = await Security.findOne({ userId });
+        if (!securityRecord) {
+            logger.warn('Logout failed: Security record not found', { userId });
+            throw new CustomError('Security details not found.', 404);
+        }
+
+        securityRecord.refreshToken = undefined;
+        securityRecord.refreshTokenExpires = undefined;
+        await securityRecord.save();
+
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+        });
+
+        logger.info('User logged out successfully', { userId });
+
+        return { message: 'User logged out successfully.' };
+    } catch (error) {
+        logger.error('Error during logout', { error: (error as Error).message });
+        throw new CustomError('Logout failed.', 500);
+    }
+};

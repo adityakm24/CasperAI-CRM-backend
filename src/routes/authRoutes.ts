@@ -29,5 +29,7 @@ router.get('/google/callback', asyncHandler(authController.googleCallback));
 
 router.get('/verify-token', asyncHandler(authController.verifyToken));
 
+router.post('/logout', authorize, asyncHandler(authController.logout));
+
 
 export default router;
