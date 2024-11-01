@@ -3,6 +3,7 @@ import Webhook from '../models/Webhook';
 import { randomBytes } from 'crypto';
 import { CustomError } from '../middlewares/errorHandler';
 import logger from '../config/logger';
+import fetch from 'node-fetch';
 
 // Service to generate a webhook for a specific user
 export const generateWebhookService = async (userId: string) => {
@@ -56,5 +57,33 @@ export const processWebhookLeadService = async (phoneNumber: string, firstName: 
     );
 
     logger.info(`Lead ${updatedLead ? 'updated' : 'created'} successfully for user: ${userWebhook.userId}`);
+
+    // API call to trigger chat service
+    const apiUrl = 'https://peaceful-bayou-47899-85cf30be7379.herokuapp.com/trigger-chat';
+    const apiBody = {
+        phoneNumber: phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`
+    };
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(apiBody)
+        });
+
+        // Check if the external API call was successful
+        if (!response.ok) {
+            logger.error('Failed to trigger chat API after lead update/add', { status: response.status, statusText: response.statusText });
+            throw new CustomError('Failed to trigger chat API', response.status);
+        }
+
+        logger.info('Chat API triggered successfully after lead update/add');
+    } catch (error) {
+        logger.error('Error in calling chat API', { error });
+        throw new CustomError('Error in calling chat API', 500);
+    }
+
     return updatedLead;
 };
