@@ -3,9 +3,13 @@ import { readFileSync } from 'fs';
 import { config } from '../config/env';
 import { CustomError } from '../middlewares/errorHandler';
 import logger from '../config/logger';
+import { resolve } from 'path';
 
-const privateKey = readFileSync(config.pasetoKeys.privateKeyPath, 'utf8');
-const publicKey = readFileSync(config.pasetoKeys.publicKeyPath, 'utf8');
+const privateKeyPath = resolve(config.pasetoKeys.privateKeyPath);
+const publicKeyPath = resolve(config.pasetoKeys.publicKeyPath);
+
+const privateKey = readFileSync(privateKeyPath, 'utf8');
+const publicKey = readFileSync(publicKeyPath, 'utf8');
 const secretKey = config.pasetoKeys.secretKey;
 
 if (!secretKey) {

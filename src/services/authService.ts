@@ -15,7 +15,7 @@ import logger from '../config/logger';
 import { startSession } from 'mongoose';
 import { randomBytes, randomInt, scryptSync } from 'crypto';
 import { Profile } from 'passport-google-oauth20';
-
+import { resolve } from 'path';
 
 // Functions related to authentication like register, login, email verification, password reset (Only the AuthService class is Added here) Dont add anything else here 
 // For updating user details, Profile Updates etc. Use userService.ts
@@ -279,7 +279,8 @@ export const requestPasswordReset = async (email: string) => {
         throw new CustomError('User with this email does not exist.', 404);
     }
 
-    const privateKey = readFileSync(config.pasetoKeys.privateKeyPath, 'utf8');
+    const privateKeyPath = resolve(config.pasetoKeys.privateKeyPath);
+    const privateKey = readFileSync(privateKeyPath, 'utf8');
     const token = await paseto.sign({ email }, privateKey, { expiresIn: '1h' }); 
 
     const expires = addMinutes(new Date(), 60);
@@ -302,7 +303,8 @@ export const requestPasswordReset = async (email: string) => {
 };
 
 export const resetPassword = async (token: string, newPassword: string) => {
-    const publicKey = readFileSync(config.pasetoKeys.publicKeyPath, 'utf8');
+    const publicKeyPath = resolve(config.pasetoKeys.publicKeyPath);
+    const publicKey = readFileSync(publicKeyPath, 'utf8');
 
     let payload;
     try {
@@ -457,3 +459,32 @@ export const handleGoogleSignIn = async (profile: Profile) => {
     }
 };
 
+
+export const logoutUser = async (userId: string, res: Response) => {
+    try {
+        logger.info('Attempting to log out user', { userId });
+
+        const securityRecord = await Security.findOne({ userId });
+        if (!securityRecord) {
+            logger.warn('Logout failed: Security record not found', { userId });
+            throw new CustomError('Security details not found.', 404);
+        }
+
+        securityRecord.refreshToken = undefined;
+        securityRecord.refreshTokenExpires = undefined;
+        await securityRecord.save();
+
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+        });
+
+        logger.info('User logged out successfully', { userId });
+
+        return { message: 'User logged out successfully.' };
+    } catch (error) {
+        logger.error('Error during logout', { error: (error as Error).message });
+        throw new CustomError('Logout failed.', 500);
+    }
+};

@@ -20,7 +20,7 @@ export const validateWebhookToken = async (req: Request, res: Response, next: Ne
             throw new CustomError('Invalid verify token', 403);
         }
 
-        req.user = { userId: userWebhook.userId }; // Attach user info to req object
+        // req.user = { userId: userWebhook.userId }; // Attach user info to req object
         next();
     } catch (error: any) {
         logger.error('Error validating webhook token', { error: error.message });
