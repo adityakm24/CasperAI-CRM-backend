@@ -4,7 +4,6 @@ import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import { sendSuccessResponse, sendCreatedResponse, sendUnauthorizedResponse, sendInternalServerErrorResponse, sendConflictResponse } from '../../utils/responseHandler';
 import { CustomError } from '../../middlewares/errorHandler';
-import sinon from 'sinon';
 import { sendUnprocessableEntityResponse } from '../../utils/responseHandler';
 import { createRefreshToken, createToken, validateToken } from '../../utils/tokenUtils';
 import Security from '../../models/Security';

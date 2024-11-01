@@ -20,4 +20,5 @@ export const config = {
     mailUser: process.env.MAIL_USER,
     mailPass: process.env.MAIL_PASS,
     nodeEnv: process.env.NODE_ENV,
+    keyPath: process.env.KEY_PATH,
 }

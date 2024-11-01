@@ -1,4 +1,4 @@
-# for TypeScript development
+# ---- Builder Stage ----
 FROM node:22-alpine AS builder
 
 WORKDIR /app
@@ -17,10 +17,10 @@ COPY package.json package-lock.json ./
 RUN npm install --production
 
 COPY --from=builder /app/dist ./dist
+COPY src/Keys/*.pem /app/dist/Keys
 
-RUN mkdir -p /app/dist/Keys && chmod -R 755 /app/dist/Keys
-RUN node -e 'require("./dist/Keys/generateKeys").generateKeys()'
 
 EXPOSE 3001
 
-CMD ["node", "dist/server.js"]
+ENTRYPOINT ["node"]
+CMD ["dist/server.js"]
