@@ -1,0 +1,43 @@
+name: Build and Deploy to AWS ECS
+
+on:
+  workflow_dispatch: # This allows you to manually start the deployment
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14" # Change if you’re using a different Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test # Optional: Run tests before deployment
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and Tag Docker image
+        run: |
+          docker build -t ${{ secrets.AWS_ECR_REPOSITORY }}:latest .
+          docker tag ${{ secrets.AWS_ECR_REPOSITORY }}:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.AWS_ECR_REPOSITORY }}:latest
+
+      - name: Push Docker image to ECR
+        run: |
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.AWS_ECR_REPOSITORY }}:latest
+
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          cluster: ${{ secrets.AWS_ECS_CLUSTER }}
+          service: ${{ secrets.AWS_ECS_SERVICE }}
+          task-definition: ${{ secrets.AWS_ECS_TASK_DEFINITION }}
+          wait-for-service-stability: true
