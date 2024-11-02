@@ -177,7 +177,8 @@ export const loginUser = async (email: string, password: string, res: Response) 
     await security.save();
 
     return {
-        user,
+        email: user.email,
+        isEmailVerified: user.isEmailVerified,
         accessToken,
     };
 };
